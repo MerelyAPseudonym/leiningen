@@ -102,6 +102,27 @@
                        (blacklisted-class? project f))]
       (.delete f))))
 
+(defn- probably-cli-regex? [thing]
+  (.startsWith thing "#\""))
+
+(defn- regex? [v]
+  (instance? java.util.regex.Pattern v))
+
+;; @TODO are we consistent about "regex" vs "regexp"?
+;; I felt compelled to include the :pre/:post-conditions as a
+;; result of using `read-string`
+(defn compilation-specs [cli-args]
+  {:pre [(every? string? cli-args)]
+   :post [(every? #(or (regex? %)
+                       (symbol? %))
+                  %)]}
+  (when cli-args
+    (let [{namespaces false
+           regexps    true} (group-by probably-cli-regex? cli-args)]
+      (concat
+       (map symbol namespaces)
+       (map read-string regexps)))))
+
 (defn compile
   "Compile Clojure source into .class files.
 
