@@ -6,7 +6,8 @@
         [leiningen.compile]
         [leiningen.test.helper :only [sample-project delete-file-recursively
                                       sample-failing-project
-                                      tricky-name-project]])
+                                      tricky-name-project
+                                      more-gen-classes-project]])
   (:require [leiningen.core.eval :as eval]
             [leiningen.core.main :as main]))
 
@@ -29,13 +30,13 @@
                      "classes" "nom" "nom" "nom.class"))))
 
 (deftest test-compile-regex
-  (compile tricky-name-project "#\"\\.+unch$\"")
-  (is (.exists (file "test_projects" "tricky-name" "target" "classes"
-                     "org" "domain" "tricky_name" "brunch.class")))
-  (is (.exists (file "test_projects" "tricky-name" "target" "classes"
-                     "org" "domain" "tricky_name" "munch.class")))
-  (is (not (.exists (file "test_projects" "tricky-name" "target" "classes"
-                          "org" "domain" "tricky_name" "core.class")))))
+  (compile more-gen-classes-project "#\"\\.ba.$\"")
+  (is (.exists (file "test_projects" "more-gen-classes" "target"
+                     "classes" "more_gen_classes" "bar.class")))
+  (is (.exists (file "test_projects" "more-gen-classes" "target"
+                     "classes" "more_gen_classes" "baz.class")))
+  (is (not (.exists (file "test_projects" "more-gen-classes" "target"
+                          "classes" "more_gen_classes" "foo.class")))))
 
 (def eip-check (atom false))
 
