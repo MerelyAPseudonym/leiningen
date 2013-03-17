@@ -119,23 +119,24 @@
   (is (not (regex? "blah")))
   (is (regex? (re-pattern "blah"))))
 
-(with-test
- ;; @TODO are we consistent about "regex" vs "regexp"?
- ;; I felt compelled to include the :pre/:post-conditions as a
- ;; result of using `read-string`
- (defn compilation-specs [cli-args]
-   {:pre [(every? string? cli-args)]
-    :post [(every? #(or (regex? %)
-                        (symbol? %))
-                   %)]}
-   (when cli-args
-     (let [{namespaces false
-            regexps    true} (group-by probably-cli-regex? cli-args)]
-       (concat
-        (map symbol namespaces)
-        (map read-string regexps)))))
- (is (= (compilation-specs ["leiningen.compile" "#\"leiningen.*\""])
-        ['leiningen.compile #"leiningen\.*"])))
+;; @TODO are we consistent about "regex" vs "regexp"?
+;; I felt compelled to include the :pre/:post-conditions as a
+;; result of using `read-string`
+(defn compilation-specs [cli-args]
+  {:pre [(every? string? cli-args)]
+   :post [(or (= % :all)
+              (every? (fn [v] (or (regex? v) (string? v)))
+                      %))]}
+  (cond (empty? cli-args)      nil
+
+        (= cli-args [":all"])  :all
+
+        :else
+        (let [{namespaces false
+               regexps    true} (group-by probably-cli-regex? cli-args)]
+          (concat
+           (map symbol namespaces)
+           (map read-string regexps)))))
 
 (defn compile
   "Compile Clojure source into .class files.
