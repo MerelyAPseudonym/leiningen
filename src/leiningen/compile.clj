@@ -141,7 +141,8 @@
   "Compile Clojure source into .class files.
 
 Uses the namespaces specified under :aot in project.clj or those given
-as command-line arguments. Use :all argument to compile everything.
+as command-line arguments. Use :all argument to compile everything. Pass
+#\"regular expressions\" to compile any matching namespaces.
 
 This should automatically happen when required if it's configured correctly; it
 shouldn't need to be manually invoked. See the javac task as well.
@@ -160,7 +161,7 @@ Code that should run on startup belongs in a -main defn."
                 (main/abort "Compilation failed:" (.getMessage e)))
               (finally (clean-non-project-classes project))))
        (main/debug "All namespaces already AOT compiled.")))
-  ([project & namespaces]
-     (compile (assoc project :aot (if (= namespaces [":all"])
-                                    :all
-                                    (map symbol namespaces))))))
+  ([project & args]
+     (compile
+      (assoc-in project [:aot]
+                (compilation-specs args)))))
