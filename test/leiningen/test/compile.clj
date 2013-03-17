@@ -29,7 +29,7 @@
                      "classes" "nom" "nom" "nom.class"))))
 
 (deftest test-compile-regex
-  (compile tricky-project "#\"\\.+unch$\"")
+  (compile tricky-name-project "#\"\\.+unch$\"")
   (is (.exists (file "test_projects" "tricky-name" "target" "classes"
                      "org" "domain" "tricky_name" "brunch.class")))
   (is (.exists (file "test_projects" "tricky-name" "target" "classes"
