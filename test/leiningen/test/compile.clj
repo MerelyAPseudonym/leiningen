@@ -28,6 +28,15 @@
   (is (.exists (file "test_projects" "sample" "target"
                      "classes" "nom" "nom" "nom.class"))))
 
+(deftest test-compile-regex
+  (compile tricky-project "#\"\..+unch$\"")
+  (is (.exists (file "test_projects" "tricky-name" "target" "classes"
+                     "org" "domain" "tricky_name" "brunch.class")))
+  (is (.exists (file "test_projects" "tricky-name" "target" "classes"
+                     "org" "domain" "tricky_name" "munch.class")))
+  (is (not (.exists (file "test_projects" "tricky-name" "target" "classes"
+                          "org" "domain" "tricky_name" "core.class")))))
+
 (def eip-check (atom false))
 
 (deftest test-plugin
