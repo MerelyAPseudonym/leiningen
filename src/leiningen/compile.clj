@@ -113,7 +113,7 @@
     (is (not (probably-cli-regex? "^jwz is displeased$")))))
 
 (with-test
-  (defn- regex? [v]
+  (defn regex? [v]
     (instance? java.util.regex.Pattern v))
   (is (regex? #"blah"))
   (is (not (regex? "blah")))
