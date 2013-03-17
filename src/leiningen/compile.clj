@@ -102,26 +102,40 @@
                        (blacklisted-class? project f))]
       (.delete f))))
 
-(defn- probably-cli-regex? [thing]
-  (.startsWith thing "#\""))
+(require 'clojure.test)
+(refer 'clojure.test :only '[with-test testing is])
+(with-test
+  (defn- probably-cli-regex? [thing]
+    (.startsWith thing "#\""))
+  (testing "that we correctly identify a string that the user intends to be a regex"
+    (is (probably-cli-regex? "#\"^jwz is displeased$\"")))
+  (testing "that we don't think _everything_ is a regex"
+    (is (not (probably-cli-regex? "^jwz is displeased$")))))
 
-(defn- regex? [v]
-  (instance? java.util.regex.Pattern v))
+(with-test
+  (defn- regex? [v]
+    (instance? java.util.regex.Pattern v))
+  (is (regex? #"blah"))
+  (is (not (regex? "blah")))
+  (is (regex? (re-pattern "blah"))))
 
-;; @TODO are we consistent about "regex" vs "regexp"?
-;; I felt compelled to include the :pre/:post-conditions as a
-;; result of using `read-string`
-(defn compilation-specs [cli-args]
-  {:pre [(every? string? cli-args)]
-   :post [(every? #(or (regex? %)
-                       (symbol? %))
-                  %)]}
-  (when cli-args
-    (let [{namespaces false
-           regexps    true} (group-by probably-cli-regex? cli-args)]
-      (concat
-       (map symbol namespaces)
-       (map read-string regexps)))))
+(with-test
+ ;; @TODO are we consistent about "regex" vs "regexp"?
+ ;; I felt compelled to include the :pre/:post-conditions as a
+ ;; result of using `read-string`
+ (defn compilation-specs [cli-args]
+   {:pre [(every? string? cli-args)]
+    :post [(every? #(or (regex? %)
+                        (symbol? %))
+                   %)]}
+   (when cli-args
+     (let [{namespaces false
+            regexps    true} (group-by probably-cli-regex? cli-args)]
+       (concat
+        (map symbol namespaces)
+        (map read-string regexps)))))
+ (is (= (compilation-specs ["leiningen.compile" "#\"leiningen.*\""])
+        ['leiningen.compile #"leiningen\.*"])))
 
 (defn compile
   "Compile Clojure source into .class files.
