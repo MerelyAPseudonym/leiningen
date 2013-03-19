@@ -102,41 +102,32 @@
                        (blacklisted-class? project f))]
       (.delete f))))
 
-(require 'clojure.test)
-(refer 'clojure.test :only '[with-test testing is])
-(with-test
-  (defn- probably-cli-regex? [thing]
-    (.startsWith thing "#\""))
-  (testing "that we correctly identify a string that the user intends to be a regex"
-    (is (probably-cli-regex? "#\"^jwz is displeased$\"")))
-  (testing "that we don't think _everything_ is a regex"
-    (is (not (probably-cli-regex? "^jwz is displeased$")))))
+(defn- probably-cli-regex? [s]
+  (.startsWith s "#\""))
 
-(with-test
-  (defn regex? [v]
-    (instance? java.util.regex.Pattern v))
-  (is (regex? #"blah"))
-  (is (not (regex? "blah")))
-  (is (regex? (re-pattern "blah"))))
+(defn regex?
+  "Returns whether the argument is an instance of java.util.regex.Pattern"
+  [v]
+  (instance? java.util.regex.Pattern v))
 
-;; @TODO are we consistent about "regex" vs "regexp"?
-;; I felt compelled to include the :pre/:post-conditions as a
-;; result of using `read-string`
-(defn compilation-specs [cli-args]
-  {:pre [(every? string? cli-args)]
-   :post [(or (= % :all)
-              (every? (some-fn symbol? regex?)
-                      %))]}
+(defn compilation-specs
+  "Takes a collection of strings (which are likely the arguments supplied by
+the user at the command line) and interprets/coerces them to symbols and
+regular expressions as appropriate.
+
+N.B. There is not (yet) any guarantee about the order of the resulting symbols and regexes."
+  [cli-args]
   (cond (empty? cli-args)      nil
 
         (= cli-args [":all"])  :all
 
         :else
         (let [{namespaces false
-               regexps    true} (group-by probably-cli-regex? cli-args)]
-          (concat
-           (map symbol namespaces)
-           (map read-string regexps)))))
+               regexes    true} (group-by probably-cli-regex? cli-args)]
+          (binding [*read-eval* false]
+            (concat
+             (map symbol namespaces)
+             (map read-string regexes))))))
 
 (defn compile
   "Compile Clojure source into .class files.
@@ -163,6 +154,6 @@ Code that should run on startup belongs in a -main defn."
               (finally (clean-non-project-classes project))))
        (main/debug "All namespaces already AOT compiled.")))
   ([project & args]
-     (compile
-      (assoc-in project [:aot]
-                (compilation-specs args)))))
+     (-> project
+       (assoc :aot (compilation-specs args))
+       compile)))
