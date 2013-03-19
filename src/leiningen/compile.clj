@@ -125,7 +125,7 @@
 (defn compilation-specs [cli-args]
   {:pre [(every? string? cli-args)]
    :post [(or (= % :all)
-              (every? (fn [v] (or (regex? v) (symbol? v)))
+              (every? (some-fn symbol? regex?)
                       %))]}
   (cond (empty? cli-args)      nil
 
